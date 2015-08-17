@@ -6,7 +6,7 @@
 This is "pixel-accuracy" 2D-shadows.
 Shadows compute fully on the GPU's pixel-shaders.
 Need GLSL 1.20 (OpenGL 2.1).
-Used GLSL-shaders (from)[http://bitbucket.org/totorigolo/shadows].
+Used GLSL-shaders [from](http://bitbucket.org/totorigolo/shadows).
 
 * [Forum](https://love2d.org/forums/viewtopic.php?f=4&t=80726&p=187854#p187854)
 * [LÖVE 2D-framework](http://love2d.org)
