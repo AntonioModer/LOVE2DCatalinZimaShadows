@@ -1,7 +1,7 @@
 ![Image Not Found](https://github.com/AntonioModer/LOVE2DCatalinZimaShadows/raw/master/LOVE2DCatalinZimaShadows%20test1.png)
 
 # LOVE2D Catalin Zima's shadows
-#### [Download standalone version](https://github.com/AntonioModer/LOVE2DCatalinZimaShadows/raw/master/LOVE2DCatalinZimaShadows%20standalone.zip)
+#### [Download standalone version](https://github.com/AntonioModer/LOVE2DCatalinZimaShadows/releases/download/v0.0.10/LOVE2DCatalinZimaShadows.standalone.zip)
 
 This is "pixel-accuracy" 2D-shadows.
 Shadows compute fully on the GPU's pixel-shaders.
