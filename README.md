@@ -8,6 +8,7 @@ Shadows compute fully on the GPU's pixel-shaders.
 Need GLSL 1.20 (OpenGL 2.1).
 Used GLSL-shaders from: http://bitbucket.org/totorigolo/shadows
 
+* Forum: https://love2d.org/forums/viewtopic.php?f=4&t=80726&p=187854#p187854
 * LÖVE 2D-framework: http://love2d.org
 * Catalin Zima's shadows: http://www.catalinzima.com/2010/07/my-technique-for-the-shader-based-dynamic-2d-shadows/
 * Sources: http://github.com/AntonioModer/LOVE2DCatalinZimaShadows
