@@ -16,11 +16,16 @@ Thanks to:
   Thomas Lacroix (http://plus.google.com/b/107248556103962831257/109936266256123891803/about?pageId=107248556103962831257)
 
 TODO:
-	- освещение объектов
+	-+ освещение объектов
+		+ нужно рисовать свет на непрозрачных пикселях
+			+ shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels
 		- testing on this: http://www.andersriggelsen.dk/glblendfunc.php
 		- (https://love2d.org/forums/viewtopic.php?f=4&t=14823#p78416)
 	- translate comments to english
 ==========================================================================]]
+
+if arg[#arg] == "-debug" then require("mobdebug").start() end																							-- ZeroBraneStudio debuger
+
 
 function love.run()
 	if love.math then
@@ -88,7 +93,7 @@ function love.load(arg)
 --	shader.shadowsCZ.byAntonioModer.distort = love.graphics.newShader([[byAntonioModer/distort.glsl]])
 --	shader.shadowsCZ.byAntonioModer.horizontalReduction = love.graphics.newShader([[byAntonioModer/horizontalReduction.glsl]])
 --	shader.shadowsCZ.byAntonioModer.drawShadows = love.graphics.newShader([[byAntonioModer/drawShadows.glsl]])
-	shader.shadowsCZ.byAntonioModer.circle = love.graphics.newShader([[
+	shader.shadowsCZ.byAntonioModer.lightGradient = love.graphics.newShader([[
 	vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
 		//texCoord.y = 1-texCoord.y;
 		vec4 pixel = Texel(texture, texCoord);
@@ -102,7 +107,88 @@ function love.load(arg)
 		return pixel;
 	}
 	]])
+	-- https://love2d.org/wiki/BlendMode_Formulas
+	shader.shadowsCZ.byAntonioModer.blendMode = {}
+	shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld = love.graphics.newShader([[
+	extern Image dstTexture;
+	extern vec2 dstTextureSize = vec2(0, 0);
 	
+	vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
+		screenCoord.y = dstTextureSize.y-screenCoord.y;											// BUG?
+		vec4 pixel = Texel(texture, texCoord);
+		vec4 res;
+		vec4 dst = Texel(dstTexture, vec2(screenCoord.x/dstTextureSize.x, screenCoord.y/dstTextureSize.y));
+		vec4 src = pixel*color;
+		
+		res.r = dst.r * (1 - src.a) + src.r * dst.r;
+		res.g = dst.g * (1 - src.a) + src.g * dst.g;
+		res.b = dst.b * (1 - src.a) + src.b * dst.b;
+		res.a = dst.a * (1 - src.a) + src.a * dst.a;
+		
+		return res;
+	}
+	]])
+	shader.shadowsCZ.byAntonioModer.blendMode.alpha = love.graphics.newShader([[
+	extern Image dstTexture;
+	extern vec2 dstTextureSize = vec2(0, 0);
+	
+	vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
+		screenCoord.y = dstTextureSize.y-screenCoord.y;											// BUG?
+		vec4 pixel = Texel(texture, texCoord);
+		vec4 res;
+		vec4 dst = Texel(dstTexture, vec2(screenCoord.x/dstTextureSize.x, screenCoord.y/dstTextureSize.y));
+		vec4 src = pixel*color;
+		
+		res.r = (dst.r * (1 - src.a)) + (src.r * src.a);
+		res.g = (dst.g * (1 - src.a)) + (src.g * src.a);
+		res.b = (dst.b * (1 - src.a)) + (src.b * src.a);
+		res.a = (dst.a * (1 - src.a)) + src.a;
+		
+		return res;
+	}
+	]])
+	shader.shadowsCZ.byAntonioModer.blendMode.additive = love.graphics.newShader([[
+	extern Image dstTexture;
+	extern vec2 dstTextureSize = vec2(0, 0);
+	
+	vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
+		screenCoord.y = dstTextureSize.y-screenCoord.y;											// BUG?
+		vec4 pixel = Texel(texture, texCoord);
+		vec4 res;
+		vec4 dst = Texel(dstTexture, vec2(screenCoord.x/dstTextureSize.x, screenCoord.y/dstTextureSize.y));
+		vec4 src = pixel*color;
+		
+		res.r = dst.r + (src.r * src.a);
+		res.g = dst.g + (src.g * src.a);
+		res.b = dst.b + (src.b * src.a);
+		res.a = dst.a + (src.a * src.a);
+		
+		return res;
+	}
+	]])	
+	shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels = love.graphics.newShader([[
+	extern Image dstTexture;
+	extern vec2 dstTextureSize = vec2(0, 0);
+	
+	vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
+		screenCoord.y = dstTextureSize.y-screenCoord.y+(love_ScreenSize.y-dstTextureSize.y);											// BUG?
+		vec4 pixel = Texel(texture, texCoord);
+		vec4 res;
+		vec4 dst = Texel(dstTexture, vec2(screenCoord.x/dstTextureSize.x, screenCoord.y/dstTextureSize.y));
+		vec4 src = pixel*color;
+		
+		if (dst.a > 0.0) {
+			// additive blend mode
+			res.r = dst.r + (src.r * src.a);
+			res.g = dst.g + (src.g * src.a);
+			res.b = dst.b + (src.b * src.a);
+			res.a = dst.a + (src.a * src.a);			
+		}
+		
+		return res;
+	}
+	]])
+
 	-- https://bitbucket.org/totorigolo/shadows
 	shader.shadowsCZ.byThomasLacroix = {}
 	shader.shadowsCZ.byThomasLacroix.distort = love.graphics.newShader[[byThomasLacroix/distort.glsl]]
@@ -130,6 +216,7 @@ function love.load(arg)
 	image.shadowsCZ.counterMax = 4
 	
 	image.light = love.graphics.newImage([[light1.png]], 'normal')
+	image.test = love.graphics.newImage([[test.png]], 'normal')
 	
 	-- canvases -----------------------------------------------------------------------------------------------------------------------------------
 	canvas = {}
@@ -147,6 +234,7 @@ function love.load(arg)
 	-------------------------------------
 	light = {}
 	light.computeShadows = true
+	
 end
 
 function love.keypressed(key)
@@ -223,7 +311,8 @@ function love.draw()
 	if false then
 		love.graphics.setShader(shader.shadowsCZ.byAntonioModer.circle)
 	end
-
+	
+	-- текстура света с тенями
 	if true then
 		love.graphics.setShader()
 		canvas.shadowsCZ[1]:clear()
@@ -246,50 +335,87 @@ function love.draw()
 	love.graphics.setShader()
 	love.graphics.setCanvas()
 	
---	light.computeShadows = false
+	light.computeShadows = false
 	end
 	
+	--[[
+	TODO:
+		- 
+	--]]
 	
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.draw(image.shadowsCZ.current)
-	
-	-- глобальный свет (солнце)
-	local lightBrightness = 0.8									-- яркость света (brightness); 1.0 ... 0.0
-	love.graphics.setColor(0, 0, 0, 255*lightBrightness)
-	love.graphics.rectangle('fill', 0, 0, 800, 600)
-	
-	love.graphics.setBlendMode('additive')
-	for i=1, 1 do
-		-- свет
-		local lightBrightness = 0.8									-- яркость света (brightness); 0.0 ... 1.0
-		love.graphics.setColor(255, 255, 255, 255*lightBrightness)			-- цвет света
-		love.graphics.draw(canvas.shadowsCZ[1])				-- shadows result
-	end
-	love.graphics.setBlendMode('alpha')
-	
-	
-	-------------------------------------------------------
-	-- BlendMode test
+	-- test BlendMode
 	if false then
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.setBlendMode('premultiplied')
+		love.graphics.draw(image.test)
+		love.graphics.setBlendMode('alpha')
+	end
+	
+	-- test BlendMode on shader
+	if true then
 		canvas.main.obj:clear()
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.setCanvas(canvas.main.obj)
+--		love.graphics.setBlendMode('premultiplied')
+--		love.graphics.draw(image.background)
+		love.graphics.draw(image.shadowsCZ.current)
+--		love.graphics.setBlendMode('alpha')
+		love.graphics.setCanvas()
 		
+		love.graphics.setColor(255, 255, 0, 255)
+		shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels:send('dstTexture', image.shadowsCZ.current)
+		shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels:send('dstTextureSize', {512.0, 512.0})
+		love.graphics.setShader(shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels)
+--		love.graphics.setBlendMode('multiplicative')		
+		love.graphics.draw(image.light)
+--		love.graphics.setBlendMode('alpha')
+		love.graphics.setShader()
+	end
+	
+	-- final
+	if false then
+		-- предметы
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.draw(image.shadowsCZ.current)
+		
+		-- глобальный свет (солнце)
+		local lBGlobal = 0.49								-- яркость света (light brightness); 0.0 ... 1.0
+		if lBGlobal > 1.0 then lBGlobal = 1.00 elseif lBGlobal < 0 then lBGlobal = 0 end
+		canvas.main.obj:clear(255*lBGlobal, 255*lBGlobal, 255*lBGlobal, 255)
 		love.graphics.setCanvas(canvas.main.obj)
 		
-		love.graphics.setColor(255, 255, 255, 255)
-		love.graphics.draw(image.shadowsCZ.current)			
-		
-		love.graphics.setColor(255, 255, 255, 255)
-		love.graphics.setBlendMode( 'multiplicative' )
-		love.graphics.draw(image.light, 0, 0, 0, 512/512)													-- можно делать различные эффекты
-		love.graphics.setBlendMode( 'alpha' )
+		-- локальный свет
+		local lightBrightness = 1.31									-- яркость света (brightness); 0.0 ... 1.0
+		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
+		love.graphics.setColor(255*lightBrightness, 0*lightBrightness, 0*lightBrightness, 255)			-- цвет света		
+		love.graphics.setBlendMode('additive')
+--		love.graphics.draw(image.light, 0, 0, 0, 512/512)				-- без тени
+--		love.graphics.setBlendMode('alpha')
+		-- с тенью
+--		love.graphics.setBlendMode('multiplicative')
+--		love.graphics.setColor(255, 255, 255, 255-(255*lBGlobal))
+		love.graphics.draw(canvas.shadowsCZ[1])		
+		love.graphics.setBlendMode('alpha')
 		
 		love.graphics.setCanvas()
-	
-		love.graphics.setColor(255, 255, 255, 255)
-		love.graphics.draw(canvas.main.obj)	
-	end		
-
-	
+		
+		-- результат
+		love.graphics.setBlendMode('multiplicative')
+		local lightBrightness = 1.53								-- яркость света (brightness); 0.0 ... 1.0
+		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
+		love.graphics.setColor(255*lightBrightness, 255*lightBrightness, 255*lightBrightness, 255)
+		love.graphics.draw(canvas.main.obj)
+		
+		-- чтобы глобальный свет не перекрывал локальный
+		local lightBrightness = 1.00								-- яркость света (brightness); 0.0 ... 1.0
+		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
+		love.graphics.setColor(255*lightBrightness, 0*lightBrightness, 0*lightBrightness, 50)		
+		love.graphics.setBlendMode('additive')
+--		love.graphics.draw(image.light, 0, 0, 0, 512/512)										-- без тени
+		love.graphics.draw(canvas.shadowsCZ[1])													-- с тенью
+		
+		love.graphics.setBlendMode('alpha')
+	end
 	---------------------------------------
 	
 	love.graphics.setColor(255, 255, 255, 255)
