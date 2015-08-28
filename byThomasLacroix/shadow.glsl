@@ -1,5 +1,5 @@
 number renderTargetSize = 512.0;
-vec4 lightColor = vec4(1.0, 0.0, 0.0, 1.0);
+vec4 lightColor = vec4(1.0, 1.0, 1.0, 1.0);
 
 number GetShadowDistanceH(vec2 TexCoord, Image reduce)
 {
@@ -35,7 +35,7 @@ vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
 	
 	
 	// Distance of this pixel from the center
-	number dist = distance(texCoord.xy, vec2(0.5, 0.5));
+	number dist = distance(texCoord, vec2(0.5, 0.5));
 	
 	//apply a ...-pixel bias
 	dist -= 0.0 / renderTargetSize;
@@ -55,16 +55,20 @@ vec4 effect(vec4 color, Image texture, vec2 texCoord, vec2 screenCoord) {
 	{
 		shadowMapDistance = GetShadowDistanceV(texCoord.xy, texture);
 	}
-
+	
 	// If distance to this pixel is lower than distance from shadowMap,
 	// then we are not in shadow
 	number light = dist < shadowMapDistance ? 1.0 : 0.0;
-	vec4 result = vec4(light, light, light, 1.0-light);
-	result *= lightColor;
-
+	vec4 result = vec4(light, light, light, light);
+	//result *= lightColor;							// set light color
+	result.a = 1.0 - light;						// рисует только тени
+	
+	
 	//number x = dist * 2.0;
-	//result.a = 2.0 / (2.0 * (x + 0.37)) - 0.37;
-	//result.a = 1.0 - x;
+	//result.a = 1.0 / (2.0 * (x + 0.5)) - 0.2;
+	
+	//result *= 0.6;									// яркость света (brightness); 0.0 ... 1.0
+	//result.a = 1.0 - (dist * 2.0);					// градиент радиальный; (* ...) - это чтобы за текстуру не светил
 	
 	return result;
 }

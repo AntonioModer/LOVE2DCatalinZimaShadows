@@ -1,4 +1,4 @@
-number renderTargetSize = 512.0;
+number renderTargetSize = 256.0;													// чем меньше, тем больше ФПС и больше артефактов в тенях
 
 vec2 Reduce(vec2 TexCoord, Image texture)
 {
