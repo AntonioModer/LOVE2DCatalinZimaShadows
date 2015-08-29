@@ -17,8 +17,11 @@ Thanks to:
 
 TODO:
 	-+ освещение объектов
-		+ нужно рисовать свет на непрозрачных пикселях
+		-+ нужно рисовать свет на непрозрачных пикселях
 			+ shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels
+			- new blendModes in LOVE 0.9.2 API:
+				- multiplicative from LOVE 0.8.0
+				-? shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels
 		- testing on this: http://www.andersriggelsen.dk/glblendfunc.php
 		- (https://love2d.org/forums/viewtopic.php?f=4&t=14823#p78416)
 	- translate comments to english
@@ -215,7 +218,7 @@ function love.load(arg)
 	image.shadowsCZ.counter = 1
 	image.shadowsCZ.counterMax = 4
 	
-	image.light = love.graphics.newImage([[light1.png]], 'normal')
+	image.light = love.graphics.newImage([[light3.png]], 'normal')
 	image.test = love.graphics.newImage([[test.png]], 'normal')
 	
 	-- canvases -----------------------------------------------------------------------------------------------------------------------------------
@@ -352,43 +355,44 @@ function love.draw()
 	end
 	
 	-- test BlendMode on shader
-	if true then
+	if false then
 		canvas.main.obj:clear()
 		love.graphics.setColor(255, 255, 255, 255)
 		love.graphics.setCanvas(canvas.main.obj)
 --		love.graphics.setBlendMode('premultiplied')
---		love.graphics.draw(image.background)
+		love.graphics.draw(image.background)
 		love.graphics.draw(image.shadowsCZ.current)
 --		love.graphics.setBlendMode('alpha')
 		love.graphics.setCanvas()
 		
-		love.graphics.setColor(255, 255, 0, 255)
-		shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels:send('dstTexture', image.shadowsCZ.current)
-		shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels:send('dstTextureSize', {512.0, 512.0})
-		love.graphics.setShader(shader.shadowsCZ.byAntonioModer.blendMode.lightOnPixels)
+		shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld:send('dstTexture', canvas.main.obj)
+		shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld:send('dstTextureSize', {800.0, 600.0})
+		love.graphics.setShader(shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld)
 --		love.graphics.setBlendMode('multiplicative')		
+		love.graphics.setColor(255, 255, 255, 4)
 		love.graphics.draw(image.light)
 --		love.graphics.setBlendMode('alpha')
 		love.graphics.setShader()
 	end
 	
 	-- final
-	if false then
+	if true then
 		-- предметы
 		love.graphics.setColor(255, 255, 255, 255)
 		love.graphics.draw(image.shadowsCZ.current)
 		
 		-- глобальный свет (солнце)
-		local lBGlobal = 0.49								-- яркость света (light brightness); 0.0 ... 1.0
+		local lBGlobal = 0.23								-- яркость света (light brightness); 0.0 ... 1.0
 		if lBGlobal > 1.0 then lBGlobal = 1.00 elseif lBGlobal < 0 then lBGlobal = 0 end
 		canvas.main.obj:clear(255*lBGlobal, 255*lBGlobal, 255*lBGlobal, 255)
 		love.graphics.setCanvas(canvas.main.obj)
 		
 		-- локальный свет
-		local lightBrightness = 1.31									-- яркость света (brightness); 0.0 ... 1.0
+		local lightColor = {r=255, g=255, b=255, a=255}
+		local lightBrightness = 1.49									-- яркость света (brightness); 0.0 ... 1.0
 		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
-		love.graphics.setColor(255*lightBrightness, 0*lightBrightness, 0*lightBrightness, 255)			-- цвет света		
-		love.graphics.setBlendMode('additive')
+		love.graphics.setColor(lightColor.r*lightBrightness, lightColor.g*lightBrightness, lightColor.b*lightBrightness, lightColor.a)			-- цвет света		
+		love.graphics.setBlendMode('screen')							-- screen or additive
 --		love.graphics.draw(image.light, 0, 0, 0, 512/512)				-- без тени
 --		love.graphics.setBlendMode('alpha')
 		-- с тенью
@@ -399,20 +403,27 @@ function love.draw()
 		
 		love.graphics.setCanvas()
 		
-		-- результат
+		-- результат ---------------------
+		
+		-- old multiplicative
+--		shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld:send('dstTexture', image.shadowsCZ.current)
+--		shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld:send('dstTextureSize', {512.0, 512.0})
+--		love.graphics.setShader(shader.shadowsCZ.byAntonioModer.blendMode.multiplicativeOld)
+		
 		love.graphics.setBlendMode('multiplicative')
-		local lightBrightness = 1.53								-- яркость света (brightness); 0.0 ... 1.0
-		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
-		love.graphics.setColor(255*lightBrightness, 255*lightBrightness, 255*lightBrightness, 255)
+		local brightness = 1.11								-- яркость (brightness); 0.0 ... 1.0
+		if brightness > 1.0 then brightness = 1.00 elseif brightness < 0 then brightness = 0 end
+		love.graphics.setColor(255*brightness, 255*brightness, 255*brightness, 255)
 		love.graphics.draw(canvas.main.obj)
+		love.graphics.setShader()
 		
 		-- чтобы глобальный свет не перекрывал локальный
 		local lightBrightness = 1.00								-- яркость света (brightness); 0.0 ... 1.0
 		if lightBrightness > 1.0 then lightBrightness = 1.00 elseif lightBrightness < 0 then lightBrightness = 0 end
-		love.graphics.setColor(255*lightBrightness, 0*lightBrightness, 0*lightBrightness, 50)		
+		love.graphics.setColor(lightColor.r*lightBrightness, lightColor.g*lightBrightness, lightColor.b*lightBrightness, 50)		
 		love.graphics.setBlendMode('additive')
 --		love.graphics.draw(image.light, 0, 0, 0, 512/512)										-- без тени
-		love.graphics.draw(canvas.shadowsCZ[1])													-- с тенью
+--		love.graphics.draw(canvas.shadowsCZ[1])													-- с тенью
 		
 		love.graphics.setBlendMode('alpha')
 	end
