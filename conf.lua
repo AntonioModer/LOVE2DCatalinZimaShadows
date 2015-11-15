@@ -14,7 +14,7 @@ function love.conf(argC)
 	argC.window.minwidth = 1																													-- Minimum window width if the window is resizable
 	argC.window.minheight = 1																													-- Minimum window height if the window is resizable
 	argC.window.fullscreen = false
-	argC.window.fullscreentype = "normal"																										-- "desktop" or "normal"
+--	argC.window.fullscreentype = "normal"																										-- "desktop" or "normal"
 	argC.window.vsync = false																													-- Enable vertical sync
 	argC.window.fsaa = 0																														-- The number of samples to use with multi-sampled antialiasing
 	argC.window.display = 1																														-- Index of the monitor to show the window in
