@@ -15,3 +15,5 @@ Used GLSL-shaders [from](http://bitbucket.org/totorigolo/shadows).
 Thanks to:
 * [Catalin Zima](http://www.catalinzima.com/about/)
 * [Thomas Lacroix](http://plus.google.com/b/107248556103962831257/109936266256123891803/about?pageId=107248556103962831257)
+
+zlib License
